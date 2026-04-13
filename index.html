@@ -236,16 +236,18 @@
   }
   #briefing.dismissed { display: none; }
   .briefing-box {
-    background: #111;
-    border: 1px solid #3a5a2a;
+    background: transparent;
+    border: none;
     border-radius: 6px;
     padding: clamp(16px, 3vw, 32px) clamp(16px, 3vw, 40px);
     max-width: min(600px, 90vw);
     max-height: 90vh;
     overflow-y: auto;
+    scrollbar-width: none;
     font-family: 'Courier New', monospace;
-    box-shadow: 0 0 40px rgba(58,90,42,0.15);
+    box-shadow: none;
   }
+  .briefing-box::-webkit-scrollbar { display: none; }
   .briefing-box .header {
     color: #5a8a3a;
     font-size: clamp(8px, 1.2vw, 11px);
@@ -492,7 +494,7 @@ const LB_WIDTH = Math.min(260, Math.max(180, window.innerWidth * 0.18));
 const viewW = window.innerWidth - LB_WIDTH;
 const viewH = window.innerHeight - TOP_BAR_H;
 
-const CELL = Math.max(14, Math.min(20, Math.floor(Math.min(viewW, viewH) / 45)));
+const CELL = 20;
 const GAP  = 0;
 const STEP = CELL + GAP;
 
