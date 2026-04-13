@@ -30,13 +30,13 @@
   }
   .top-bar h1 {
     font-family: 'Courier New', monospace;
-    font-size: 15px;
+    font-size: clamp(10px, 1.5vw, 15px);
     letter-spacing: 2px;
     color: #e8c44a;
   }
   .top-bar .callsign {
     font-family: 'Courier New', monospace;
-    font-size: 10px;
+    font-size: clamp(8px, 1vw, 10px);
     color: #666;
     letter-spacing: 1px;
   }
@@ -59,6 +59,13 @@
   .btn.active { background: #444; border-color: #e8c44a; color: #e8c44a; }
   .sep { color: #333; margin: 0 2px; }
 
+  /* ---------- Main layout ---------- */
+  .main-area {
+    flex: 1;
+    display: flex;
+    overflow: hidden;
+  }
+
   /* ---------- Board ---------- */
   #board-container {
     flex: 1;
@@ -68,6 +75,94 @@
     align-items: center;
     justify-content: center;
   }
+
+  /* ---------- Leaderboard sidebar ---------- */
+  #leaderboard {
+    width: clamp(180px, 18vw, 260px);
+    background: rgba(15,15,25,0.95);
+    border-left: 1px solid #333;
+    padding: 10px;
+    overflow-y: auto;
+    flex-shrink: 0;
+    font-family: 'Courier New', monospace;
+  }
+  #leaderboard h3 {
+    color: #e8c44a;
+    font-size: 13px;
+    letter-spacing: 2px;
+    text-align: center;
+    margin-bottom: 8px;
+  }
+  .lb-tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 8px;
+  }
+  .lb-tabs button {
+    flex: 1;
+    background: #1a1a2a;
+    border: 1px solid #333;
+    color: #888;
+    padding: 3px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 9px;
+    transition: all 0.15s;
+  }
+  .lb-tabs button.active {
+    background: #2a2a3a;
+    border-color: #e8c44a;
+    color: #e8c44a;
+  }
+  .lb-entry {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 6px;
+    border-bottom: 1px solid #1a1a2a;
+    font-size: 11px;
+  }
+  .lb-entry:nth-child(1) .lb-rank { color: #ffd700; }
+  .lb-entry:nth-child(2) .lb-rank { color: #c0c0c0; }
+  .lb-entry:nth-child(3) .lb-rank { color: #cd7f32; }
+  .lb-rank { color: #555; min-width: 18px; text-align: right; }
+  .lb-name { color: #ccc; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .lb-time { color: #8ab; min-width: 30px; text-align: right; }
+  .lb-oil { color: #4a4; min-width: 45px; text-align: right; font-weight: bold; }
+  .lb-empty { color: #555; font-size: 11px; text-align: center; padding: 20px 0; font-style: italic; }
+
+  /* ---------- Name entry in win modal ---------- */
+  .name-entry {
+    margin: 10px 0;
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    align-items: center;
+  }
+  .name-entry input {
+    background: #111;
+    border: 1px solid #555;
+    color: #fff;
+    padding: 6px 10px;
+    border-radius: 3px;
+    font-family: 'Courier New', monospace;
+    font-size: 13px;
+    width: 160px;
+    text-align: center;
+  }
+  .name-entry input::placeholder { color: #555; }
+  .name-entry button {
+    background: #3a5a2a;
+    border: 1px solid #5a8a3a;
+    color: #ddd;
+    padding: 6px 14px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 12px;
+  }
+  .name-entry button:hover { background: #4a7a3a; color: #fff; }
   #board {
     display: grid;
     gap: 0px;
@@ -144,14 +239,16 @@
     background: #111;
     border: 1px solid #3a5a2a;
     border-radius: 6px;
-    padding: 32px 40px;
-    max-width: 600px;
+    padding: clamp(16px, 3vw, 32px) clamp(16px, 3vw, 40px);
+    max-width: min(600px, 90vw);
+    max-height: 90vh;
+    overflow-y: auto;
     font-family: 'Courier New', monospace;
     box-shadow: 0 0 40px rgba(58,90,42,0.15);
   }
   .briefing-box .header {
     color: #5a8a3a;
-    font-size: 11px;
+    font-size: clamp(8px, 1.2vw, 11px);
     letter-spacing: 3px;
     border-bottom: 1px solid #2a3a1a;
     padding-bottom: 8px;
@@ -159,27 +256,27 @@
   }
   .briefing-box .classified {
     color: #cc3333;
-    font-size: 13px;
+    font-size: clamp(10px, 1.4vw, 13px);
     letter-spacing: 4px;
     text-align: center;
     margin-bottom: 12px;
   }
   .briefing-box h2 {
     color: #e8c44a;
-    font-size: 20px;
+    font-size: clamp(14px, 2.2vw, 20px);
     margin-bottom: 12px;
     letter-spacing: 1px;
   }
   .briefing-box p {
     color: #8a8a7a;
-    font-size: 12px;
+    font-size: clamp(10px, 1.3vw, 12px);
     line-height: 1.7;
     margin-bottom: 10px;
   }
   .briefing-box p strong { color: #baba9a; }
   .briefing-box .sign-off {
     color: #5a5a4a;
-    font-size: 10px;
+    font-size: clamp(8px, 1.1vw, 10px);
     margin-top: 16px;
     border-top: 1px solid #2a2a1a;
     padding-top: 10px;
@@ -195,7 +292,7 @@
     border-radius: 4px;
     cursor: pointer;
     font-family: 'Courier New', monospace;
-    font-size: 14px;
+    font-size: clamp(12px, 1.5vw, 14px);
     letter-spacing: 2px;
     transition: all 0.2s;
   }
@@ -214,12 +311,14 @@
   #overlay.show { display: flex; }
   .modal {
     background: #1a1a2a; border: 1px solid #444;
-    border-radius: 8px; padding: 28px 36px; text-align: center;
+    border-radius: 8px; padding: clamp(16px, 3vw, 28px) clamp(16px, 3vw, 36px); text-align: center;
     font-family: 'Courier New', monospace;
-    max-width: 500px;
+    max-width: min(500px, 90vw);
+    max-height: 90vh;
+    overflow-y: auto;
   }
-  .modal h2 { font-size: 22px; margin-bottom: 10px; }
-  .modal p { margin: 6px 0; color: #999; font-size: 13px; line-height: 1.5; }
+  .modal h2 { font-size: clamp(16px, 2.2vw, 22px); margin-bottom: 10px; }
+  .modal p { margin: 6px 0; color: #999; font-size: clamp(11px, 1.3vw, 13px); line-height: 1.5; }
   .modal .win { color: #e8c44a; }
   .modal .lose { color: #ff4444; }
   .modal .flavor { color: #666; font-size: 11px; font-style: italic; margin-top: 10px; }
@@ -239,9 +338,9 @@
   .modal.win-modal {
     border: 2px solid #e8c44a;
     box-shadow: 0 0 60px rgba(232,196,74,0.3);
-    max-width: 550px;
+    max-width: min(550px, 90vw);
   }
-  .modal .eagle { font-size: 48px; margin-bottom: 8px; }
+  .modal .eagle { font-size: clamp(28px, 4vw, 48px); margin-bottom: 8px; }
   .modal .usa-banner {
     font-size: 24px;
     letter-spacing: 6px;
@@ -267,12 +366,12 @@
     text-align: center;
   }
   .modal .stat .stat-val {
-    font-size: 28px;
+    font-size: clamp(18px, 2.5vw, 28px);
     color: #e8c44a;
     font-weight: bold;
   }
   .modal .stat .stat-label {
-    font-size: 9px;
+    font-size: clamp(7px, 1vw, 9px);
     color: #777;
     text-transform: uppercase;
     letter-spacing: 1px;
@@ -312,6 +411,11 @@
       positions and flag them. One wrong sweep and your crew is swimming home.
     </p>
     <p>
+      <strong>WARNING:</strong> Iranian anti-ship missile batteries along the coast have a lock
+      on your vessel. You have <strong>limited time</strong> before they fire. Move fast, Commander.
+      Every second the strait stays closed, oil prices climb higher.
+    </p>
+    <p>
       <strong>Left-click</strong> to sweep a sector. <strong>Right-click</strong> to flag a suspected mine.
       Don't let the Admiral down - he's still mad about the last guy who sank a
       $200 million minesweeper because he "had a good feeling about that square."
@@ -342,9 +446,21 @@
   <button id="new-game" class="btn">New Sortie</button>
 </div>
 
-<div id="board-container">
-  <div id="loading-msg">ACQUIRING SATELLITE IMAGERY...</div>
-  <div id="board"></div>
+<div class="main-area">
+  <div id="board-container">
+    <div id="loading-msg">ACQUIRING SATELLITE IMAGERY...</div>
+    <div id="board"></div>
+  </div>
+  <div id="leaderboard">
+    <h3>&#x1F3C6; LEADERBOARD</h3>
+    <div class="lb-tabs">
+      <button class="active" data-lb="training">Training</button>
+      <button data-lb="easy">Caution</button>
+      <button data-lb="medium">Standard</button>
+      <button data-lb="hard">Reckless</button>
+    </div>
+    <div id="lb-list"></div>
+  </div>
 </div>
 
 <canvas id="fireworks"></canvas>
@@ -359,6 +475,10 @@
     <div id="modal-stats" class="stats-row" style="display:none;"></div>
     <p id="modal-time"></p>
     <p class="flavor" id="modal-flavor"></p>
+    <div id="name-entry-wrap" class="name-entry" style="display:none;">
+      <input type="text" id="player-name" placeholder="Your callsign" maxlength="12">
+      <button id="submit-score">Log Score</button>
+    </div>
     <br>
     <button id="new-game-modal" class="btn" style="font-size:14px;padding:8px 20px;">Request New Sortie</button>
   </div>
@@ -367,10 +487,12 @@
 <script>
 // ---- Sizing ----
 const TOP_BAR_H = 40;
-const viewW = window.innerWidth;
+// Match the CSS clamp for leaderboard width
+const LB_WIDTH = Math.min(260, Math.max(180, window.innerWidth * 0.18));
+const viewW = window.innerWidth - LB_WIDTH;
 const viewH = window.innerHeight - TOP_BAR_H;
 
-const CELL = 20;
+const CELL = Math.max(14, Math.min(20, Math.floor(Math.min(viewW, viewH) / 45)));
 const GAP  = 0;
 const STEP = CELL + GAP;
 
@@ -394,10 +516,66 @@ const CONFIGS = {
   hard:     { ratio: 99 / 480 },  // 20.6%
 };
 let difficulty = CONFIGS.easy;
+let difficultyKey = 'easy';
 
 let waterMask = null;
 let totalWater = 0;
 let board, revealed, flagged, mineCount, gameOver, firstClick, timerInterval, seconds;
+let missileTimeout = null;
+
+// ---- Oil price: purely time-based, scaled per difficulty ----
+// Faster clear = lower oil price. Each difficulty has a different time scale.
+const OIL_BASE = 55;    // best possible price (instant clear)
+const OIL_CRISIS = 200;  // starting crisis price
+// Time targets (seconds) - clear within this for ~$70 oil
+const TIME_TARGETS = { training: 120, easy: 240, medium: 360, hard: 480 };
+// Missile strike time limits per difficulty
+const MISSILE_LIMITS = { training: 300, easy: 480, medium: 600, hard: 720 };
+
+function calcOilPrice(time, diff) {
+  const target = TIME_TARGETS[diff] || 240;
+  // Price scales linearly: at 0s = $55, at target = ~$80, at 2x target = ~$140
+  const price = OIL_BASE + (time / target) * 40;
+  return Math.min(OIL_CRISIS, Math.round(price));
+}
+
+// ---- Leaderboard (localStorage) ----
+function getLeaderboard() {
+  try {
+    return JSON.parse(localStorage.getItem('hormuz_leaderboard') || '[]');
+  } catch { return []; }
+}
+function saveScore(name, time, oilPrice, diff) {
+  const lb = getLeaderboard();
+  lb.push({ name, time, oil: oilPrice, diff, date: Date.now() });
+  lb.sort((a, b) => a.oil - b.oil); // lowest oil price = best
+  if (lb.length > 50) lb.length = 50;
+  localStorage.setItem('hormuz_leaderboard', JSON.stringify(lb));
+  renderLeaderboard();
+}
+let lbFilter = 'training';
+function renderLeaderboard() {
+  const lb = getLeaderboard();
+  const filtered = lb.filter(e => e.diff === lbFilter).slice(0, 20);
+  const listEl = document.getElementById('lb-list');
+  if (filtered.length === 0) {
+    listEl.innerHTML = '<div class="lb-empty">No scores yet. Clear the strait!</div>';
+    return;
+  }
+  listEl.innerHTML = filtered.map((e, i) =>
+    `<div class="lb-entry">
+      <span class="lb-rank">${i + 1}</span>
+      <span class="lb-name">${escHtml(e.name)}</span>
+      <span class="lb-time">${e.time}s</span>
+      <span class="lb-oil">$${e.oil}/bbl</span>
+    </div>`
+  ).join('');
+}
+function escHtml(s) {
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
 
 const boardEl   = document.getElementById('board');
 const mineEl    = document.getElementById('mine-count');
@@ -562,6 +740,7 @@ function init() {
   const fw = document.getElementById('fireworks');
   fw.classList.remove('active');
   fw.getContext('2d').clearRect(0, 0, fw.width, fw.height);
+  document.getElementById('name-entry-wrap').style.display = 'none';
   render();
 }
 
@@ -627,6 +806,11 @@ function handleClick(r, c) {
     timerInterval = setInterval(() => {
       seconds++;
       timerEl.textContent = String(seconds).padStart(3, '0');
+      // Missile strike check
+      const limit = MISSILE_LIMITS[difficultyKey] || 480;
+      if (seconds >= limit && !gameOver) {
+        missileStrike();
+      }
     }, 1000);
   }
   if (board[r][c] === -1) { lose(r, c); return; }
@@ -729,6 +913,46 @@ function lose(r, c) {
   }, totalTime);
 }
 
+const MISSILE_FLAVORS = [
+  "Iranian Noor anti-ship missile. Direct hit. Nothing personal, Commander.",
+  "IRGC coastal battery got tired of waiting. Can't blame them, honestly.",
+  "Intel says they fired a C-802. Intel was right for once.",
+  "You took so long the Iranians had time to aim, fire, reload, and fire again.",
+  "The missile was launched 2 minutes ago. You just didn't notice until now.",
+  "The Admiral is going to use this as a PowerPoint example of what not to do.",
+];
+
+function missileStrike() {
+  gameOver = true;
+  clearInterval(timerInterval);
+
+  // Reuse the explosion system for a big hit
+  const explosionCtx = startExplosionCanvas();
+  // Random position on the board for the missile impact
+  const impactR = Math.floor(ROWS / 2 + (Math.random() - 0.5) * ROWS * 0.4);
+  const impactC = Math.floor(COLS / 2 + (Math.random() - 0.5) * COLS * 0.4);
+  addExplosionAt(explosionCtx, impactR, impactC, 120);
+  playExplosionSound();
+
+  // Secondary explosions
+  for (let i = 1; i < 6; i++) {
+    setTimeout(() => {
+      const r2 = impactR + Math.floor((Math.random() - 0.5) * 10);
+      const c2 = impactC + Math.floor((Math.random() - 0.5) * 10);
+      addExplosionAt(explosionCtx, r2, c2, 50 + Math.random() * 40);
+    }, i * 250);
+  }
+
+  setTimeout(() => {
+    document.getElementById('modal-title').innerHTML = '<span class="lose">\u{1F3AF} MISSILE STRIKE \u{1F3AF}</span>';
+    document.getElementById('modal-msg').textContent = 'USS Devastator was hit by an Iranian anti-ship missile. You took too long, Commander.';
+    document.getElementById('modal-time').textContent = `Time survived: ${seconds}s`;
+    document.getElementById('modal-flavor').textContent =
+      MISSILE_FLAVORS[Math.floor(Math.random() * MISSILE_FLAVORS.length)];
+    overlayEl.classList.add('show');
+  }, 1800);
+}
+
 function checkWin() {
   let n = 0;
   for (let r = 0; r < ROWS; r++)
@@ -756,16 +980,28 @@ function checkWin() {
     document.getElementById('modal-medal').style.display = 'inline-block';
     document.getElementById('modal-medal').textContent = '\u{1F396} ' + medal;
 
+    const finalOil = calcOilPrice(seconds, difficultyKey);
+
     document.getElementById('modal-msg').textContent =
-      `All ${mineCount} Iranian naval mines neutralized. The Strait of Hormuz is open. Freedom of navigation restored. Oil flows. America wins.`;
+      `All ${mineCount} Iranian naval mines neutralized. The Strait of Hormuz is open. Oil drops to $${finalOil}/bbl.`;
 
     const statsEl = document.getElementById('modal-stats');
     statsEl.style.display = 'flex';
     statsEl.innerHTML = `
       <div class="stat"><div class="stat-val">${mineCount}</div><div class="stat-label">Mines Cleared</div></div>
-      <div class="stat"><div class="stat-val">${totalWater - mineCount}</div><div class="stat-label">Sectors Swept</div></div>
       <div class="stat"><div class="stat-val">${seconds}s</div><div class="stat-label">Mission Time</div></div>
+      <div class="stat"><div class="stat-val" style="color:#4a4">$${finalOil}</div><div class="stat-label">Oil Price</div></div>
     `;
+
+    // Show name entry
+    document.getElementById('name-entry-wrap').style.display = 'flex';
+    const nameInput = document.getElementById('player-name');
+    const lastN = localStorage.getItem('hormuz_last_name') || '';
+    nameInput.value = lastN;
+    setTimeout(() => nameInput.focus(), 100);
+
+    // Store final oil for score submission
+    window._lastWinOil = finalOil;
 
     document.getElementById('modal-time').textContent = '';
     document.getElementById('modal-flavor').textContent =
@@ -1039,12 +1275,38 @@ document.querySelectorAll('[data-d]').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('[data-d]').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
-    difficulty = CONFIGS[btn.dataset.d];
+    difficultyKey = btn.dataset.d;
+    difficulty = CONFIGS[difficultyKey];
     init();
   });
 });
 document.getElementById('new-game').addEventListener('click', init);
 document.getElementById('new-game-modal').addEventListener('click', init);
+
+// ---- Leaderboard tabs ----
+document.querySelectorAll('[data-lb]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('[data-lb]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    lbFilter = btn.dataset.lb;
+    renderLeaderboard();
+  });
+});
+
+// ---- Score submission ----
+document.getElementById('submit-score').addEventListener('click', () => {
+  const name = document.getElementById('player-name').value.trim() || 'Anonymous';
+  localStorage.setItem('hormuz_last_name', name);
+  saveScore(name, seconds, window._lastWinOil || 200, difficultyKey);
+  document.getElementById('name-entry-wrap').style.display = 'none';
+  // Switch leaderboard to current difficulty
+  lbFilter = difficultyKey;
+  document.querySelectorAll('[data-lb]').forEach(b => b.classList.toggle('active', b.dataset.lb === difficultyKey));
+  renderLeaderboard();
+});
+document.getElementById('player-name').addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('submit-score').click();
+});
 
 // ---- Briefing ----
 document.getElementById('begin-mission').addEventListener('click', () => {
@@ -1055,6 +1317,7 @@ document.getElementById('begin-mission').addEventListener('click', () => {
 (async () => {
   await loadAndDetectWater();
   loadingEl.style.display = 'none';
+  renderLeaderboard();
   init();
 })();
 </script>
