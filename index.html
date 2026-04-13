@@ -447,6 +447,28 @@
   <button data-d="hard" class="btn">Reckless</button>
   <span class="sep">|</span>
   <button id="new-game" class="btn">New Sortie</button>
+  <button id="rules-btn" class="btn">Rules?</button>
+</div>
+
+<!-- RULES OVERLAY -->
+<div id="rules-overlay" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.92); z-index:200; align-items:center; justify-content:center;">
+  <div class="briefing-box" style="background:rgba(17,17,17,0.95); border:1px solid #3a5a2a; max-width:min(550px,90vw);">
+    <div class="header" style="color:#5a8a3a; font-size:clamp(8px,1.2vw,11px); letter-spacing:3px; border-bottom:1px solid #2a3a1a; padding-bottom:8px; margin-bottom:14px;">FIELD MANUAL - MINE COUNTERMEASURES</div>
+    <h2 style="color:#e8c44a; font-size:clamp(14px,2.2vw,20px); margin-bottom:14px;">HOW TO PLAY</h2>
+    <p><strong>OBJECTIVE:</strong> Reveal every safe water cell without hitting a mine. The gray tiles cover the Strait of Hormuz. Mines are hidden beneath some of them.</p>
+    <p><strong>LEFT-CLICK</strong> a tile to reveal it. If it's safe, it shows a number (or blank).</p>
+    <p><strong>NUMBERS</strong> tell you how many mines are in the 8 surrounding tiles. Use logic to figure out which tiles are safe and which are mines.</p>
+    <p><strong>RIGHT-CLICK</strong> a tile to place a flag where you think a mine is. This is just a marker - it doesn't affect the game.</p>
+    <p><strong>BLANK TILES</strong> (no number) mean zero adjacent mines. These auto-reveal their neighbors in a chain.</p>
+    <p><strong>YOU WIN</strong> when every non-mine tile is revealed. The faster you clear, the lower the oil price drops.</p>
+    <p><strong>YOU LOSE</strong> if you click a mine (boom) or if you take too long and an Iranian missile hits your ship.</p>
+    <p style="margin-top:14px;"><strong>DIFFICULTY:</strong></p>
+    <p><strong>Training</strong> - 40 mines, 5 min missile timer<br>
+    <strong>Caution</strong> - 12% mines, 8 min timer<br>
+    <strong>Standard</strong> - 16% mines, 10 min timer<br>
+    <strong>Reckless</strong> - 21% mines, 12 min timer</p>
+    <button class="begin-btn" id="rules-close">UNDERSTOOD</button>
+  </div>
 </div>
 
 <div class="main-area">
@@ -1319,6 +1341,18 @@ document.getElementById('player-name').addEventListener('keydown', e => {
 // ---- Briefing ----
 document.getElementById('begin-mission').addEventListener('click', () => {
   document.getElementById('briefing').classList.add('dismissed');
+});
+
+// ---- Rules ----
+document.getElementById('rules-btn').addEventListener('click', () => {
+  document.getElementById('rules-overlay').style.display = 'flex';
+});
+document.getElementById('rules-close').addEventListener('click', () => {
+  document.getElementById('rules-overlay').style.display = 'none';
+});
+document.getElementById('rules-overlay').addEventListener('click', (e) => {
+  if (e.target === document.getElementById('rules-overlay'))
+    document.getElementById('rules-overlay').style.display = 'none';
 });
 
 // ---- Boot ----
