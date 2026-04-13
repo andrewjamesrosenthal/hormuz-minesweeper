@@ -127,7 +127,7 @@
   .lb-entry:nth-child(2) .lb-rank { color: #c0c0c0; }
   .lb-entry:nth-child(3) .lb-rank { color: #cd7f32; }
   .lb-rank { color: #555; min-width: 18px; text-align: right; }
-  .lb-name { color: #ccc; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .lb-name { color: #ccc; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-transform: uppercase; }
   .lb-time { color: #8ab; min-width: 30px; text-align: right; }
   .lb-oil { color: #4a4; min-width: 45px; text-align: right; font-weight: bold; }
   .lb-empty { color: #555; font-size: 11px; text-align: center; padding: 20px 0; font-style: italic; }
@@ -150,6 +150,7 @@
     font-size: 13px;
     width: 160px;
     text-align: center;
+    text-transform: uppercase;
   }
   .name-entry input::placeholder { color: #555; }
   .name-entry button {
@@ -542,6 +543,11 @@ function calcOilPrice(time, diff) {
 }
 
 // ---- Leaderboard (localStorage) ----
+// One-time leaderboard reset for v2 scoring
+if (localStorage.getItem('hormuz_lb_v2') !== 'true') {
+  localStorage.removeItem('hormuz_leaderboard');
+  localStorage.setItem('hormuz_lb_v2', 'true');
+}
 function getLeaderboard() {
   try {
     return JSON.parse(localStorage.getItem('hormuz_leaderboard') || '[]');
