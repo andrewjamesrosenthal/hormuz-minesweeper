@@ -1,0 +1,1062 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OPERATION HORMUZ SWEEP</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; overflow: hidden; }
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: #0a0a14;
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ---------- HUD ---------- */
+  .top-bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 5px 16px;
+    background: rgba(0,0,0,0.9);
+    justify-content: center;
+    flex-wrap: wrap;
+    z-index: 20;
+    flex-shrink: 0;
+    border-bottom: 1px solid #333;
+  }
+  .top-bar h1 {
+    font-family: 'Courier New', monospace;
+    font-size: 15px;
+    letter-spacing: 2px;
+    color: #e8c44a;
+  }
+  .top-bar .callsign {
+    font-family: 'Courier New', monospace;
+    font-size: 10px;
+    color: #666;
+    letter-spacing: 1px;
+  }
+  .hud-box {
+    background: #1a1a2a;
+    border: 1px solid #444;
+    border-radius: 4px;
+    padding: 2px 10px;
+    text-align: center;
+    min-width: 65px;
+  }
+  .hud-box .label { font-size: 8px; color: #777; text-transform: uppercase; letter-spacing: 1px; }
+  .hud-box .val { font-size: 17px; font-weight: bold; color: #e8c44a; font-family: 'Courier New', monospace; }
+  .btn {
+    background: #2a2a3a; border: 1px solid #555; color: #ccc;
+    padding: 4px 11px; border-radius: 3px; cursor: pointer;
+    font-size: 11px; transition: all 0.15s; font-family: inherit;
+  }
+  .btn:hover { background: #444; color: #fff; }
+  .btn.active { background: #444; border-color: #e8c44a; color: #e8c44a; }
+  .sep { color: #333; margin: 0 2px; }
+
+  /* ---------- Board ---------- */
+  #board-container {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  #board {
+    display: grid;
+    gap: 0px;
+    position: relative;
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    background-color: #111;
+    image-rendering: auto;
+  }
+
+  .cell {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    cursor: pointer;
+    user-select: none;
+    position: relative;
+    line-height: 1;
+  }
+
+  .cell.land {
+    background: transparent;
+    cursor: default;
+    pointer-events: none;
+  }
+
+  .cell.hidden {
+    background: #bdbdbd;
+    border-top: 2px solid #ffffff;
+    border-left: 2px solid #ffffff;
+    border-bottom: 2px solid #7b7b7b;
+    border-right: 2px solid #7b7b7b;
+  }
+  .cell.hidden:hover { background: #c8c8c8; }
+  .cell.hidden:active {
+    background: #a8a8a8;
+    border: 1px solid #999;
+  }
+
+  .cell.revealed {
+    background: rgba(192,192,192,0.92);
+    border: 1px solid rgba(128,128,128,0.4);
+    cursor: default;
+  }
+
+  .cell.flagged {
+    background: #bdbdbd;
+    border-top: 2px solid #ffffff;
+    border-left: 2px solid #ffffff;
+    border-bottom: 2px solid #7b7b7b;
+    border-right: 2px solid #7b7b7b;
+  }
+
+  .cell.mine-hit { background: #ff3333; border: 1px solid #cc0000; }
+  .cell.mine-shown { background: rgba(192,192,192,0.88); border: 1px solid #aaa; }
+
+  .n1 { color: #0000ff; } .n2 { color: #008000; } .n3 { color: #ff0000; }
+  .n4 { color: #000080; } .n5 { color: #800000; } .n6 { color: #008080; }
+  .n7 { color: #000000; } .n8 { color: #808080; }
+
+  /* ---------- Briefing overlay ---------- */
+  #briefing {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.92);
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  #briefing.dismissed { display: none; }
+  .briefing-box {
+    background: #111;
+    border: 1px solid #3a5a2a;
+    border-radius: 6px;
+    padding: 32px 40px;
+    max-width: 600px;
+    font-family: 'Courier New', monospace;
+    box-shadow: 0 0 40px rgba(58,90,42,0.15);
+  }
+  .briefing-box .header {
+    color: #5a8a3a;
+    font-size: 11px;
+    letter-spacing: 3px;
+    border-bottom: 1px solid #2a3a1a;
+    padding-bottom: 8px;
+    margin-bottom: 14px;
+  }
+  .briefing-box .classified {
+    color: #cc3333;
+    font-size: 13px;
+    letter-spacing: 4px;
+    text-align: center;
+    margin-bottom: 12px;
+  }
+  .briefing-box h2 {
+    color: #e8c44a;
+    font-size: 20px;
+    margin-bottom: 12px;
+    letter-spacing: 1px;
+  }
+  .briefing-box p {
+    color: #8a8a7a;
+    font-size: 12px;
+    line-height: 1.7;
+    margin-bottom: 10px;
+  }
+  .briefing-box p strong { color: #baba9a; }
+  .briefing-box .sign-off {
+    color: #5a5a4a;
+    font-size: 10px;
+    margin-top: 16px;
+    border-top: 1px solid #2a2a1a;
+    padding-top: 10px;
+    line-height: 1.6;
+  }
+  .briefing-box .begin-btn {
+    display: block;
+    margin: 18px auto 0;
+    background: #3a5a2a;
+    border: 1px solid #5a8a3a;
+    color: #ddd;
+    padding: 10px 32px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: 'Courier New', monospace;
+    font-size: 14px;
+    letter-spacing: 2px;
+    transition: all 0.2s;
+  }
+  .briefing-box .begin-btn:hover {
+    background: #4a7a3a;
+    color: #fff;
+  }
+
+  /* ---------- Game overlay ---------- */
+  #overlay {
+    display: none; position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.7); z-index: 100;
+    align-items: center; justify-content: center;
+  }
+  #overlay.show { display: flex; }
+  .modal {
+    background: #1a1a2a; border: 1px solid #444;
+    border-radius: 8px; padding: 28px 36px; text-align: center;
+    font-family: 'Courier New', monospace;
+    max-width: 500px;
+  }
+  .modal h2 { font-size: 22px; margin-bottom: 10px; }
+  .modal p { margin: 6px 0; color: #999; font-size: 13px; line-height: 1.5; }
+  .modal .win { color: #e8c44a; }
+  .modal .lose { color: #ff4444; }
+  .modal .flavor { color: #666; font-size: 11px; font-style: italic; margin-top: 10px; }
+
+  /* ---------- Fireworks canvas ---------- */
+  #fireworks {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    z-index: 150;
+    pointer-events: none;
+    display: none;
+  }
+  #fireworks.active { display: block; }
+
+  /* Win modal upgrades */
+  .modal.win-modal {
+    border: 2px solid #e8c44a;
+    box-shadow: 0 0 60px rgba(232,196,74,0.3);
+    max-width: 550px;
+  }
+  .modal .eagle { font-size: 48px; margin-bottom: 8px; }
+  .modal .usa-banner {
+    font-size: 24px;
+    letter-spacing: 6px;
+    margin: 6px 0;
+  }
+  .modal .medal {
+    color: #e8c44a;
+    font-size: 12px;
+    letter-spacing: 2px;
+    margin: 8px 0;
+    padding: 6px 12px;
+    border: 1px solid rgba(232,196,74,0.3);
+    border-radius: 4px;
+    display: inline-block;
+  }
+  .modal .stats-row {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    margin: 12px 0;
+  }
+  .modal .stat {
+    text-align: center;
+  }
+  .modal .stat .stat-val {
+    font-size: 28px;
+    color: #e8c44a;
+    font-weight: bold;
+  }
+  .modal .stat .stat-label {
+    font-size: 9px;
+    color: #777;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  #loading-msg {
+    position: absolute;
+    top: 50%; left: 50%; transform: translate(-50%,-50%);
+    z-index: 5; color: #888; font-size: 13px;
+    font-family: 'Courier New', monospace; letter-spacing: 2px;
+    pointer-events: none;
+    background: rgba(0,0,0,0.7); padding: 14px 28px; border-radius: 8px;
+  }
+</style>
+</head>
+<body>
+
+<!-- MISSION BRIEFING -->
+<div id="briefing">
+  <div class="briefing-box">
+    <div class="classified">// CLASSIFIED //</div>
+    <div class="header">U.S. NAVY - FIFTH FLEET COMMAND - BAHRAIN</div>
+    <h2>OPERATION HORMUZ SWEEP</h2>
+    <p>
+      Commander, Iranian naval forces have deployed contact mines throughout the
+      <strong>Strait of Hormuz</strong> in an attempt to disrupt international shipping.
+      20% of the world's oil passes through these waters daily. The strait is now closed.
+    </p>
+    <p>
+      You have been assigned command of <strong>MCM Squadron 3</strong> aboard the
+      USS Devastator. Your mission: <strong>clear every mine from the shipping lane</strong>
+      without detonating one under your hull.
+    </p>
+    <p>
+      CENTCOM has provided satellite imagery of the operational area. Mines are hidden
+      beneath the surface - use your sonar contacts (numbers) to triangulate their
+      positions and flag them. One wrong sweep and your crew is swimming home.
+    </p>
+    <p>
+      <strong>Left-click</strong> to sweep a sector. <strong>Right-click</strong> to flag a suspected mine.
+      Don't let the Admiral down - he's still mad about the last guy who sank a
+      $200 million minesweeper because he "had a good feeling about that square."
+    </p>
+    <div class="sign-off">
+      VADM R. HARRINGTON, COMMANDER FIFTH FLEET<br>
+      NAVCENT / COMUSNAVCENT<br>
+      DTG: 130400Z APR 2026<br>
+      CLASSIFICATION: SECRET // NOFORN
+    </div>
+    <button class="begin-btn" id="begin-mission">ACCEPT MISSION</button>
+  </div>
+</div>
+
+<!-- HUD -->
+<div class="top-bar">
+  <h1>OPERATION HORMUZ SWEEP</h1>
+  <span class="callsign">MCM SQN 3 // USS DEVASTATOR</span>
+  <span class="sep">|</span>
+  <div class="hud-box"><div class="label">Mines</div><div class="val" id="mine-count">--</div></div>
+  <div class="hud-box"><div class="label">Time</div><div class="val" id="timer">000</div></div>
+  <span class="sep">|</span>
+  <button data-d="training" class="btn">Training</button>
+  <button data-d="easy" class="btn active">Caution</button>
+  <button data-d="medium" class="btn">Standard</button>
+  <button data-d="hard" class="btn">Reckless</button>
+  <span class="sep">|</span>
+  <button id="new-game" class="btn">New Sortie</button>
+</div>
+
+<div id="board-container">
+  <div id="loading-msg">ACQUIRING SATELLITE IMAGERY...</div>
+  <div id="board"></div>
+</div>
+
+<canvas id="fireworks"></canvas>
+
+<div id="overlay">
+  <div class="modal" id="modal-box">
+    <div id="modal-eagle" class="eagle" style="display:none;"></div>
+    <h2 id="modal-title"></h2>
+    <div id="modal-banner" class="usa-banner" style="display:none;"></div>
+    <div id="modal-medal" class="medal" style="display:none;"></div>
+    <p id="modal-msg"></p>
+    <div id="modal-stats" class="stats-row" style="display:none;"></div>
+    <p id="modal-time"></p>
+    <p class="flavor" id="modal-flavor"></p>
+    <br>
+    <button id="new-game-modal" class="btn" style="font-size:14px;padding:8px 20px;">Request New Sortie</button>
+  </div>
+</div>
+
+<script>
+// ---- Sizing ----
+const TOP_BAR_H = 40;
+const viewW = window.innerWidth;
+const viewH = window.innerHeight - TOP_BAR_H;
+
+const CELL = 20;
+const GAP  = 0;
+const STEP = CELL + GAP;
+
+const COLS = Math.floor(viewW / STEP);
+const ROWS = Math.floor(viewH / STEP);
+const boardW = COLS * STEP;
+const boardH = ROWS * STEP;
+
+// Bounding box: Zoom 2 - good balance of strait + surrounding land
+const BBOX = [54.80, 25.10, 57.60, 27.30];
+
+const ESRI = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/export';
+// 1x resolution - faster load, CSS stretches fine
+const SAT_URL = `${ESRI}?bbox=${BBOX.join(',')}&bboxSR=4326&size=${boardW},${boardH}&format=jpg&f=image`;
+
+// Standard minesweeper mine ratios
+const CONFIGS = {
+  training: { fixed: 40 },          // flat 40 mines
+  easy:     { ratio: 10 / 81 },   // 12.3%
+  medium:   { ratio: 40 / 256 },  // 15.6%
+  hard:     { ratio: 99 / 480 },  // 20.6%
+};
+let difficulty = CONFIGS.easy;
+
+let waterMask = null;
+let totalWater = 0;
+let board, revealed, flagged, mineCount, gameOver, firstClick, timerInterval, seconds;
+
+const boardEl   = document.getElementById('board');
+const mineEl    = document.getElementById('mine-count');
+const timerEl   = document.getElementById('timer');
+const overlayEl = document.getElementById('overlay');
+const loadingEl = document.getElementById('loading-msg');
+
+// ---- Loss flavor text ----
+const LOSE_FLAVORS = [
+  "The Admiral is NOT going to be happy about the paperwork.",
+  "That's coming out of the Navy's budget. And probably your paycheck.",
+  "CENTCOM is already drafting the press release: 'Crew recovered safely. Ship not so much.'",
+  "Somewhere in Tehran, someone just got a promotion.",
+  "The good news: you found a mine. The bad news: you found it the hard way.",
+  "Your successor has been briefed. They asked if the job was dangerous.",
+  "Hull breach detected. Also, career breach detected.",
+  "Iran's state TV is already celebrating. They're calling it a 'tactical success.'",
+  "Don't worry, they named a reef after you.",
+];
+const WIN_FLAVORS = [
+  "Oil tankers are moving. Gas prices drop 2 cents. Nobody thanks you. God bless America.",
+  "The Admiral sends his regards. And by 'regards' he means more assignments. Hooah.",
+  "CENTCOM has classified your success. The public will never know. Freedom isn't free.",
+  "Tehran is reportedly 'confused' by the disappearance of their mines. Cry about it.",
+  "Congratulations, Commander. The Strait is open. Now do the Suez Canal.",
+  "Mission complete. Your reward: a slightly less terrible MRE and a firm handshake.",
+  "Fox News is calling you a hero. CNN is calling it 'provocative.' Same mission.",
+  "The President has been briefed. He said 'tremendous.' You've been promoted to desk duty.",
+  "Iran's Navy just updated their LinkedIn status to 'looking for new opportunities.'",
+  "Somewhere, a bald eagle just shed a single tear of pride.",
+  "Freedom of navigation restored. You're basically the Navy's Uber driver.",
+];
+
+const WIN_MEDALS = [
+  "NAVY DISTINGUISHED SERVICE MEDAL",
+  "MERITORIOUS SERVICE MEDAL - FIFTH FLEET",
+  "PRESIDENTIAL UNIT CITATION",
+  "NAVY CROSS - MINE COUNTERMEASURES",
+  "LEGION OF MERIT - OPERATION HORMUZ SWEEP",
+];
+
+// ---- Water detection ----
+async function loadAndDetectWater() {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = COLS;
+      canvas.height = ROWS;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, COLS, ROWS);
+      const data = ctx.getImageData(0, 0, COLS, ROWS).data;
+
+      const mask = [];
+      for (let r = 0; r < ROWS; r++) {
+        mask[r] = [];
+        for (let c = 0; c < COLS; c++) {
+          const i = (r * COLS + c) * 4;
+          const R = data[i], G = data[i+1], B = data[i+2];
+          const brightness = (R + G + B) / 3;
+          // Water is always blue/teal-dominant. Dark land (rocks, mountains,
+          // islands) is neutral gray or warm-toned. Require clear B > R.
+          const isW = (brightness < 75 && B > R * 1.1) ||
+                      (B > R * 1.25 && brightness < 125) ||
+                      (B > R * 1.15 && G > R * 1.08 && brightness < 100);
+          mask[r][c] = isW;
+        }
+      }
+
+      // Morphological cleanup - smooth coastline, remove stray pixels
+      for (let pass = 0; pass < 4; pass++) {
+        const next = mask.map(row => [...row]);
+        for (let r = 1; r < ROWS - 1; r++) {
+          for (let c = 1; c < COLS - 1; c++) {
+            let wn = 0;
+            for (let dr = -1; dr <= 1; dr++)
+              for (let dc = -1; dc <= 1; dc++)
+                if ((dr || dc) && mask[r+dr][c+dc]) wn++;
+            // Remove isolated water (stray pixels on land)
+            if (mask[r][c] && wn <= 3) next[r][c] = false;
+            // Fill isolated land holes in water
+            if (!mask[r][c] && wn >= 6) next[r][c] = true;
+          }
+        }
+        for (let r = 0; r < ROWS; r++)
+          for (let c = 0; c < COLS; c++)
+            mask[r][c] = next[r][c];
+      }
+
+      // Second pass: flood-fill from edges to find the main water body,
+      // and kill any tiny disconnected water patches (< 20 cells)
+      const visited = Array.from({length: ROWS}, () => Array(COLS).fill(false));
+      function floodCount(sr, sc) {
+        const cells = [];
+        const stack = [[sr, sc]];
+        visited[sr][sc] = true;
+        while (stack.length) {
+          const [r, c] = stack.pop();
+          cells.push([r, c]);
+          for (let dr = -1; dr <= 1; dr++)
+            for (let dc = -1; dc <= 1; dc++) {
+              if (!dr && !dc) continue;
+              const nr = r+dr, nc = c+dc;
+              if (nr >= 0 && nr < ROWS && nc >= 0 && nc < COLS &&
+                  !visited[nr][nc] && mask[nr][nc]) {
+                visited[nr][nc] = true;
+                stack.push([nr, nc]);
+              }
+            }
+        }
+        return cells;
+      }
+      // Find all water regions, keep only those with 20+ cells
+      for (let r = 0; r < ROWS; r++)
+        for (let c = 0; c < COLS; c++)
+          if (mask[r][c] && !visited[r][c]) {
+            const region = floodCount(r, c);
+            if (region.length < 20) {
+              for (const [rr, rc] of region) mask[rr][rc] = false;
+            }
+          }
+
+      totalWater = 0;
+      for (let r = 0; r < ROWS; r++)
+        for (let c = 0; c < COLS; c++)
+          if (mask[r][c]) totalWater++;
+
+      waterMask = mask;
+      boardEl.style.backgroundImage = `url('${img.src}')`;
+      resolve();
+    };
+    img.onerror = () => {
+      waterMask = Array.from({length: ROWS}, () => Array(COLS).fill(true));
+      totalWater = ROWS * COLS;
+      resolve();
+    };
+    img.src = SAT_URL;
+  });
+}
+
+// ---- Game logic ----
+function init() {
+  clearInterval(timerInterval);
+  seconds = 0;
+  timerEl.textContent = '000';
+  gameOver = false;
+  firstClick = true;
+  mineCount = difficulty.fixed
+    ? Math.min(difficulty.fixed, totalWater - 9)
+    : Math.max(1, Math.min(Math.round(totalWater * difficulty.ratio), totalWater - 9));
+  mineEl.textContent = mineCount;
+  board    = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
+  revealed = Array.from({ length: ROWS }, () => Array(COLS).fill(false));
+  flagged  = Array.from({ length: ROWS }, () => Array(COLS).fill(false));
+  overlayEl.classList.remove('show');
+  document.getElementById('modal-box').classList.remove('win-modal');
+  document.getElementById('modal-eagle').style.display = 'none';
+  document.getElementById('modal-banner').style.display = 'none';
+  document.getElementById('modal-medal').style.display = 'none';
+  document.getElementById('modal-stats').style.display = 'none';
+  const fw = document.getElementById('fireworks');
+  fw.classList.remove('active');
+  fw.getContext('2d').clearRect(0, 0, fw.width, fw.height);
+  render();
+}
+
+function placeMines(safeR, safeC) {
+  let placed = 0;
+  while (placed < mineCount) {
+    const r = Math.floor(Math.random() * ROWS);
+    const c = Math.floor(Math.random() * COLS);
+    if (!waterMask[r][c] || board[r][c] === -1) continue;
+    if (Math.abs(r - safeR) <= 1 && Math.abs(c - safeC) <= 1) continue;
+    board[r][c] = -1;
+    placed++;
+  }
+  for (let r = 0; r < ROWS; r++)
+    for (let c = 0; c < COLS; c++) {
+      if (!waterMask[r][c] || board[r][c] === -1) continue;
+      let n = 0;
+      for (let dr = -1; dr <= 1; dr++)
+        for (let dc = -1; dc <= 1; dc++) {
+          const nr = r+dr, nc = c+dc;
+          if (nr >= 0 && nr < ROWS && nc >= 0 && nc < COLS && board[nr][nc] === -1) n++;
+        }
+      board[r][c] = n;
+    }
+}
+
+function render() {
+  boardEl.style.gridTemplateColumns = `repeat(${COLS}, ${CELL}px)`;
+  boardEl.style.width  = boardW + 'px';
+  boardEl.style.height = boardH + 'px';
+
+  const fontSize = Math.max(10, CELL - 6) + 'px';
+  boardEl.innerHTML = '';
+  const frag = document.createDocumentFragment();
+  for (let r = 0; r < ROWS; r++)
+    for (let c = 0; c < COLS; c++) {
+      const cell = document.createElement('div');
+      cell.className = 'cell';
+      cell.style.width  = CELL + 'px';
+      cell.style.height = CELL + 'px';
+      cell.style.fontSize = fontSize;
+      if (waterMask[r][c]) {
+        cell.classList.add('hidden');
+        cell.addEventListener('click', () => handleClick(r, c));
+        cell.addEventListener('contextmenu', e => { e.preventDefault(); handleFlag(r, c); });
+      } else {
+        cell.classList.add('land');
+      }
+      frag.appendChild(cell);
+    }
+  boardEl.appendChild(frag);
+}
+
+function getCell(r, c) {
+  return boardEl.children[r * COLS + c];
+}
+
+function handleClick(r, c) {
+  if (gameOver || flagged[r][c] || revealed[r][c]) return;
+  if (firstClick) {
+    firstClick = false;
+    placeMines(r, c);
+    timerInterval = setInterval(() => {
+      seconds++;
+      timerEl.textContent = String(seconds).padStart(3, '0');
+    }, 1000);
+  }
+  if (board[r][c] === -1) { lose(r, c); return; }
+  reveal(r, c);
+  checkWin();
+}
+
+function reveal(r, c) {
+  if (r < 0 || r >= ROWS || c < 0 || c >= COLS) return;
+  if (!waterMask[r][c] || revealed[r][c] || flagged[r][c]) return;
+  revealed[r][c] = true;
+  const cell = getCell(r, c);
+  cell.classList.remove('hidden');
+  cell.classList.add('revealed');
+  const val = board[r][c];
+  if (val > 0) {
+    cell.textContent = val;
+    cell.classList.add('n' + val);
+  } else if (val === 0) {
+    for (let dr = -1; dr <= 1; dr++)
+      for (let dc = -1; dc <= 1; dc++)
+        if (dr || dc) reveal(r + dr, c + dc);
+  }
+}
+
+function handleFlag(r, c) {
+  if (gameOver || revealed[r][c]) return;
+  const cell = getCell(r, c);
+  if (flagged[r][c]) {
+    flagged[r][c] = false;
+    cell.classList.remove('flagged');
+    cell.textContent = '';
+    mineCount++;
+  } else {
+    flagged[r][c] = true;
+    cell.classList.add('flagged');
+    cell.textContent = '\u{1F6A9}';
+    mineCount--;
+  }
+  mineEl.textContent = mineCount;
+}
+
+function lose(r, c) {
+  gameOver = true;
+  clearInterval(timerInterval);
+
+  // Collect all mine positions, sorted by distance from the hit
+  const mines = [];
+  for (let i = 0; i < ROWS; i++)
+    for (let j = 0; j < COLS; j++)
+      if (board[i][j] === -1) {
+        const dist = Math.sqrt((i - r) ** 2 + (j - c) ** 2);
+        mines.push({ r: i, c: j, dist });
+      }
+  mines.sort((a, b) => a.dist - b.dist);
+
+  // Start the explosion canvas + animation loop
+  const explosionCtx = startExplosionCanvas();
+
+  // First mine (the one you hit) - big explosion
+  const hit = getCell(r, c);
+  hit.classList.remove('hidden');
+  hit.classList.add('mine-hit');
+  hit.textContent = '\u{1F4A5}';
+  addExplosionAt(explosionCtx, r, c, 80);
+  playExplosionSound();
+
+  // Chain-explode all other mines outward with staggered delays
+  const maxDelay = Math.min(mines.length * 50, 4000);
+  mines.forEach((m, idx) => {
+    if (m.r === r && m.c === c) return;
+    const delay = 100 + (idx / mines.length) * maxDelay;
+    setTimeout(() => {
+      const cell = getCell(m.r, m.c);
+      cell.classList.remove('hidden', 'flagged');
+      cell.classList.add('mine-hit');
+      cell.textContent = '\u{1F4A5}';
+
+      // Full explosion animation for each mine
+      addExplosionAt(explosionCtx, m.r, m.c, 30 + Math.random() * 30);
+
+      // Fade to bomb icon after a moment
+      setTimeout(() => {
+        cell.classList.remove('mine-hit');
+        cell.classList.add('mine-shown');
+        cell.textContent = '\u{1F4A3}';
+      }, 400);
+    }, delay);
+  });
+
+  // Show modal after all explosions finish
+  const totalTime = maxDelay + 800;
+  setTimeout(() => {
+    document.getElementById('modal-title').innerHTML = '<span class="lose">\u{1F4A5} VESSEL SUNK \u{1F4A5}</span>';
+    document.getElementById('modal-msg').textContent = 'USS Devastator has been lost with all hands.';
+    document.getElementById('modal-time').textContent = `Time survived: ${seconds}s`;
+    document.getElementById('modal-flavor').textContent =
+      LOSE_FLAVORS[Math.floor(Math.random() * LOSE_FLAVORS.length)];
+    overlayEl.classList.add('show');
+  }, totalTime);
+}
+
+function checkWin() {
+  let n = 0;
+  for (let r = 0; r < ROWS; r++)
+    for (let c = 0; c < COLS; c++)
+      if (waterMask[r][c] && revealed[r][c]) n++;
+  if (n === totalWater - mineCount) {
+    gameOver = true;
+    clearInterval(timerInterval);
+
+    // Fireworks!
+    startFireworks();
+
+    const box = document.getElementById('modal-box');
+    box.classList.add('win-modal');
+
+    document.getElementById('modal-eagle').style.display = 'block';
+    document.getElementById('modal-eagle').textContent = '\u{1F985}\u{1F1FA}\u{1F1F8}\u{1F985}';
+
+    document.getElementById('modal-title').innerHTML =
+      '<span class="win">MISSION ACCOMPLISHED</span>';
+
+    // Banner removed
+
+    const medal = WIN_MEDALS[Math.floor(Math.random() * WIN_MEDALS.length)];
+    document.getElementById('modal-medal').style.display = 'inline-block';
+    document.getElementById('modal-medal').textContent = '\u{1F396} ' + medal;
+
+    document.getElementById('modal-msg').textContent =
+      `All ${mineCount} Iranian naval mines neutralized. The Strait of Hormuz is open. Freedom of navigation restored. Oil flows. America wins.`;
+
+    const statsEl = document.getElementById('modal-stats');
+    statsEl.style.display = 'flex';
+    statsEl.innerHTML = `
+      <div class="stat"><div class="stat-val">${mineCount}</div><div class="stat-label">Mines Cleared</div></div>
+      <div class="stat"><div class="stat-val">${totalWater - mineCount}</div><div class="stat-label">Sectors Swept</div></div>
+      <div class="stat"><div class="stat-val">${seconds}s</div><div class="stat-label">Mission Time</div></div>
+    `;
+
+    document.getElementById('modal-time').textContent = '';
+    document.getElementById('modal-flavor').textContent =
+      WIN_FLAVORS[Math.floor(Math.random() * WIN_FLAVORS.length)];
+    overlayEl.classList.add('show');
+  }
+}
+
+// ---- Victory SFX ----
+// ---- Explosion effect for losing ----
+function playExplosionSound() {
+  try {
+    const ac = new (window.AudioContext || window.webkitAudioContext)();
+    // Big boom
+    for (let i = 0; i < 4; i++) {
+      const t = ac.currentTime + i * 0.4;
+      const bufSize = ac.sampleRate * 0.8;
+      const buf = ac.createBuffer(1, bufSize, ac.sampleRate);
+      const data = buf.getChannelData(0);
+      for (let s = 0; s < bufSize; s++) {
+        data[s] = (Math.random() * 2 - 1) * Math.exp(-s / (ac.sampleRate * 0.15));
+      }
+      const src = ac.createBufferSource();
+      src.buffer = buf;
+      const gain = ac.createGain();
+      const filter = ac.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(400, t);
+      filter.frequency.exponentialRampToValueAtTime(80, t + 0.6);
+      gain.gain.setValueAtTime(0.25, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.8);
+      src.connect(filter);
+      filter.connect(gain);
+      gain.connect(ac.destination);
+      src.start(t);
+    }
+    setTimeout(() => ac.close(), 3000);
+  } catch(e) {}
+}
+
+// Shared explosion system - start the canvas once, add explosions to it over time
+let explosionState = null;
+
+function startExplosionCanvas() {
+  const canvas = document.getElementById('fireworks');
+  canvas.classList.add('active');
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  const ctx = canvas.getContext('2d');
+
+  const particles = [];
+  const shockwaves = [];
+  let lastActivity = 0;
+  let shakeUntil = 0;
+
+  const COLORS = [
+    '#ff2200', '#ff4400', '#ff6600', '#ff8800', '#ffaa00',
+    '#ffcc00', '#ff3300', '#cc2200', '#993300', '#ff5500',
+  ];
+  const SMOKE = ['#333', '#444', '#555', '#222', '#111'];
+
+  function spawnExplosion(x, y, size) {
+    lastActivity = 0;
+    shakeUntil = 20;
+    for (let i = 0; i < size; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const speed = 1 + Math.random() * (size / 10);
+      particles.push({
+        x, y,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed - Math.random() * 2,
+        life: 25 + Math.random() * 45,
+        maxLife: 70,
+        color: COLORS[Math.floor(Math.random() * COLORS.length)],
+        size: 2 + Math.random() * 4,
+        isSmoke: false,
+      });
+    }
+    for (let i = 0; i < size / 3; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const speed = 0.3 + Math.random() * 1.5;
+      particles.push({
+        x, y,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed - Math.random(),
+        life: 40 + Math.random() * 50,
+        maxLife: 90,
+        color: SMOKE[Math.floor(Math.random() * SMOKE.length)],
+        size: 4 + Math.random() * 8,
+        isSmoke: true,
+      });
+    }
+    shockwaves.push({ x, y, radius: 5, maxRadius: 40 + Math.random() * 60, alpha: 0.7 });
+  }
+
+  const state = { spawnExplosion, canvas, ctx };
+  explosionState = state;
+
+  function animate() {
+    lastActivity++;
+    // Keep running as long as there are particles or it's been less than 6 seconds idle
+    if (particles.length === 0 && shockwaves.length === 0 && lastActivity > 360) {
+      canvas.classList.remove('active');
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      document.body.style.transform = '';
+      explosionState = null;
+      return;
+    }
+
+    ctx.globalCompositeOperation = 'destination-out';
+    ctx.fillStyle = 'rgba(0,0,0,0.1)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.globalCompositeOperation = 'lighter';
+    for (let i = shockwaves.length - 1; i >= 0; i--) {
+      const s = shockwaves[i];
+      s.radius += 3;
+      s.alpha *= 0.94;
+      if (s.alpha < 0.01) { shockwaves.splice(i, 1); continue; }
+      ctx.strokeStyle = `rgba(255,150,50,${s.alpha})`;
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, s.radius, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+
+    for (let i = particles.length - 1; i >= 0; i--) {
+      const p = particles[i];
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vy += p.isSmoke ? -0.01 : 0.04;
+      p.vx *= 0.99;
+      p.life--;
+      if (p.life <= 0) { particles.splice(i, 1); continue; }
+      const alpha = p.life / p.maxLife;
+      ctx.globalCompositeOperation = p.isSmoke ? 'source-over' : 'lighter';
+      ctx.globalAlpha = alpha;
+      ctx.fillStyle = p.color;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.size * (p.isSmoke ? 1 : alpha), 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    ctx.globalAlpha = 1;
+    ctx.globalCompositeOperation = 'source-over';
+
+    if (shakeUntil > 0) {
+      shakeUntil--;
+      const intensity = shakeUntil / 20 * 5;
+      document.body.style.transform =
+        `translate(${(Math.random()-0.5)*intensity}px, ${(Math.random()-0.5)*intensity}px)`;
+    } else {
+      document.body.style.transform = '';
+    }
+
+    requestAnimationFrame(animate);
+  }
+  animate();
+  return state;
+}
+
+function addExplosionAt(ctx, gridR, gridC, size) {
+  if (!explosionState) return;
+  const boardRect = boardEl.getBoundingClientRect();
+  const x = boardRect.left + gridC * STEP + CELL / 2;
+  const y = boardRect.top + gridR * STEP + CELL / 2;
+  explosionState.spawnExplosion(x, y, size);
+}
+
+function startFireworks() {
+  const canvas = document.getElementById('fireworks');
+  canvas.classList.add('active');
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  const ctx = canvas.getContext('2d');
+
+  const particles = [];
+  const rockets = [];
+  let frame = 0;
+  const DURATION = 500; // frames (~8 seconds at 60fps)
+
+  // Red, white, blue
+  const COLORS = [
+    ['#ff2244','#ff5566','#ff8899'],
+    ['#ffffff','#dddddd','#bbbbbb'],
+    ['#2244ff','#4466ff','#6688ff'],
+    ['#e8c44a','#ffd700','#ffea70'],
+  ];
+
+  function spawnRocket() {
+    rockets.push({
+      x: Math.random() * canvas.width,
+      y: canvas.height,
+      targetY: canvas.height * (0.15 + Math.random() * 0.35),
+      speed: 4 + Math.random() * 3,
+      colors: COLORS[Math.floor(Math.random() * COLORS.length)],
+    });
+  }
+
+  function explode(x, y, colors) {
+    const count = 40 + Math.floor(Math.random() * 40);
+    for (let i = 0; i < count; i++) {
+      const angle = (Math.PI * 2 * i) / count + (Math.random() - 0.5) * 0.3;
+      const speed = 1.5 + Math.random() * 3.5;
+      particles.push({
+        x, y,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        life: 60 + Math.random() * 40,
+        maxLife: 100,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        size: 1.5 + Math.random() * 2,
+      });
+    }
+  }
+
+  function animate() {
+    if (frame > DURATION) {
+      canvas.classList.remove('active');
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      return;
+    }
+    frame++;
+    ctx.globalCompositeOperation = 'destination-out';
+    ctx.fillStyle = 'rgba(0,0,0,0.12)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.globalCompositeOperation = 'lighter';
+
+    // Spawn rockets
+    if (frame < DURATION - 100 && Math.random() < 0.08) spawnRocket();
+
+    // Update rockets
+    for (let i = rockets.length - 1; i >= 0; i--) {
+      const r = rockets[i];
+      r.y -= r.speed;
+      ctx.fillStyle = '#ffcc44';
+      ctx.fillRect(r.x - 1, r.y, 2, 6);
+      if (r.y <= r.targetY) {
+        explode(r.x, r.y, r.colors);
+        rockets.splice(i, 1);
+      }
+    }
+
+    // Update particles
+    for (let i = particles.length - 1; i >= 0; i--) {
+      const p = particles[i];
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vy += 0.03; // gravity
+      p.vx *= 0.99;
+      p.life--;
+      if (p.life <= 0) { particles.splice(i, 1); continue; }
+      const alpha = p.life / p.maxLife;
+      ctx.globalAlpha = alpha;
+      ctx.fillStyle = p.color;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.size * alpha, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+    requestAnimationFrame(animate);
+  }
+
+  // Kick off with a burst
+  for (let i = 0; i < 5; i++) setTimeout(() => spawnRocket(), i * 150);
+  animate();
+}
+
+// ---- Controls ----
+document.querySelectorAll('[data-d]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('[data-d]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    difficulty = CONFIGS[btn.dataset.d];
+    init();
+  });
+});
+document.getElementById('new-game').addEventListener('click', init);
+document.getElementById('new-game-modal').addEventListener('click', init);
+
+// ---- Briefing ----
+document.getElementById('begin-mission').addEventListener('click', () => {
+  document.getElementById('briefing').classList.add('dismissed');
+});
+
+// ---- Boot ----
+(async () => {
+  await loadAndDetectWater();
+  loadingEl.style.display = 'none';
+  init();
+})();
+</script>
+</body>
+</html>
