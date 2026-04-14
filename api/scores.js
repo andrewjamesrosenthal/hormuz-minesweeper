@@ -41,6 +41,16 @@ module.exports = async function handler(req, res) {
     return res.status(204).end();
   }
 
+  // Temp reset endpoint - DELETE to clear all scores
+  if (req.method === 'DELETE') {
+    try {
+      await saveScores([]);
+      return res.json({ ok: true, cleared: true });
+    } catch (e) {
+      return res.status(500).json({ error: e.message });
+    }
+  }
+
   if (req.method === 'GET') {
     const scores = await getScores();
     return res.json(scores);
