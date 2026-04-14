@@ -565,29 +565,35 @@ function calcOilPrice(time, diff) {
   return Math.min(OIL_CRISIS, Math.round(price));
 }
 
-// ---- Leaderboard (localStorage) ----
-// One-time leaderboard reset for v2 scoring
-if (localStorage.getItem('hormuz_lb_v2') !== 'true') {
-  localStorage.removeItem('hormuz_leaderboard');
-  localStorage.setItem('hormuz_lb_v2', 'true');
-}
-function getLeaderboard() {
+// ---- Global Leaderboard (API-backed) ----
+const API_URL = '/api/scores';
+let allScores = [];
+
+async function fetchLeaderboard() {
   try {
-    return JSON.parse(localStorage.getItem('hormuz_leaderboard') || '[]');
-  } catch { return []; }
-}
-function saveScore(name, time, oilPrice, diff) {
-  const lb = getLeaderboard();
-  lb.push({ name, time, oil: oilPrice, diff, date: Date.now() });
-  lb.sort((a, b) => a.oil - b.oil); // lowest oil price = best
-  if (lb.length > 50) lb.length = 50;
-  localStorage.setItem('hormuz_leaderboard', JSON.stringify(lb));
+    const resp = await fetch(API_URL);
+    if (resp.ok) allScores = await resp.json();
+  } catch { /* offline fallback - keep whatever we have */ }
   renderLeaderboard();
 }
+
+async function saveScore(name, time, oilPrice, diff) {
+  try {
+    await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: name.slice(0, 12).toUpperCase(), time, oil: oilPrice, diff }),
+    });
+    await fetchLeaderboard();
+  } catch { /* silently fail */ }
+}
+
 let lbFilter = 'training';
 function renderLeaderboard() {
-  const lb = getLeaderboard();
-  const filtered = lb.filter(e => e.diff === lbFilter).slice(0, 20);
+  const filtered = allScores
+    .filter(e => e.diff === lbFilter)
+    .sort((a, b) => a.oil - b.oil)
+    .slice(0, 20);
   const listEl = document.getElementById('lb-list');
   if (filtered.length === 0) {
     listEl.innerHTML = '<div class="lb-empty">No scores yet. Clear the strait!</div>';
@@ -1360,7 +1366,7 @@ document.getElementById('rules-overlay').addEventListener('click', (e) => {
 (async () => {
   await loadAndDetectWater();
   loadingEl.style.display = 'none';
-  renderLeaderboard();
+  fetchLeaderboard();
   init();
 })();
 </script>
