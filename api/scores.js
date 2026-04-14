@@ -1,4 +1,4 @@
-const { put, list } = require('@vercel/blob');
+const { put, list, del } = require('@vercel/blob');
 
 const SCORES_KEY = 'leaderboard.json';
 const MAX_PER_DIFF = 20;
@@ -9,12 +9,22 @@ async function getScores() {
     if (blobs.length === 0) return [];
     const resp = await fetch(blobs[0].url);
     return await resp.json();
-  } catch {
+  } catch (e) {
+    console.error('getScores error:', e);
     return [];
   }
 }
 
 async function saveScores(scores) {
+  // Delete existing blob first, then write new one
+  try {
+    const { blobs } = await list({ prefix: SCORES_KEY });
+    for (const b of blobs) {
+      await del(b.url);
+    }
+  } catch (e) {
+    console.error('delete old blob error:', e);
+  }
   await put(SCORES_KEY, JSON.stringify(scores), {
     access: 'public',
     addRandomSuffix: false,
@@ -23,7 +33,6 @@ async function saveScores(scores) {
 }
 
 module.exports = async function handler(req, res) {
-  // CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -63,7 +72,6 @@ module.exports = async function handler(req, res) {
         date: Date.now(),
       });
 
-      // Keep top 20 per difficulty, sorted by oil price
       const grouped = {};
       for (const s of scores) {
         if (!grouped[s.diff]) grouped[s.diff] = [];
@@ -78,7 +86,8 @@ module.exports = async function handler(req, res) {
       await saveScores(trimmed);
       return res.json({ ok: true });
     } catch (e) {
-      return res.status(500).json({ error: 'Server error' });
+      console.error('POST error:', e);
+      return res.status(500).json({ error: e.message || 'Server error' });
     }
   }
 
