@@ -1,6 +1,4 @@
-import { put, list, head } from '@vercel/blob';
-
-export const config = { runtime: 'edge' };
+const { put, list } = require('@vercel/blob');
 
 const SCORES_KEY = 'leaderboard.json';
 const MAX_PER_DIFF = 20;
@@ -24,41 +22,36 @@ async function saveScores(scores) {
   });
 }
 
-export default async function handler(req) {
+module.exports = async function handler(req, res) {
   // CORS
-  const headers = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type',
-    'Content-Type': 'application/json',
-  };
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
   if (req.method === 'OPTIONS') {
-    return new Response(null, { status: 204, headers });
+    return res.status(204).end();
   }
 
   if (req.method === 'GET') {
     const scores = await getScores();
-    return new Response(JSON.stringify(scores), { headers });
+    return res.json(scores);
   }
 
   if (req.method === 'POST') {
     try {
-      const body = await req.json();
-      const { name, time, oil, diff } = body;
+      const { name, time, oil, diff } = req.body;
 
-      // Validate
       if (!name || typeof name !== 'string' || name.length > 12) {
-        return new Response(JSON.stringify({ error: 'Invalid name' }), { status: 400, headers });
+        return res.status(400).json({ error: 'Invalid name' });
       }
       if (typeof time !== 'number' || time < 0 || time > 9999) {
-        return new Response(JSON.stringify({ error: 'Invalid time' }), { status: 400, headers });
+        return res.status(400).json({ error: 'Invalid time' });
       }
       if (typeof oil !== 'number' || oil < 0 || oil > 999) {
-        return new Response(JSON.stringify({ error: 'Invalid oil' }), { status: 400, headers });
+        return res.status(400).json({ error: 'Invalid oil' });
       }
       if (!['training', 'easy', 'medium', 'hard'].includes(diff)) {
-        return new Response(JSON.stringify({ error: 'Invalid difficulty' }), { status: 400, headers });
+        return res.status(400).json({ error: 'Invalid difficulty' });
       }
 
       const scores = await getScores();
@@ -70,24 +63,24 @@ export default async function handler(req) {
         date: Date.now(),
       });
 
-      // Sort by oil price (lowest = best), keep top 20 per difficulty
+      // Keep top 20 per difficulty, sorted by oil price
       const grouped = {};
       for (const s of scores) {
         if (!grouped[s.diff]) grouped[s.diff] = [];
         grouped[s.diff].push(s);
       }
       const trimmed = [];
-      for (const diff in grouped) {
-        grouped[diff].sort((a, b) => a.oil - b.oil);
-        trimmed.push(...grouped[diff].slice(0, MAX_PER_DIFF));
+      for (const d in grouped) {
+        grouped[d].sort((a, b) => a.oil - b.oil);
+        trimmed.push(...grouped[d].slice(0, MAX_PER_DIFF));
       }
 
       await saveScores(trimmed);
-      return new Response(JSON.stringify({ ok: true }), { headers });
+      return res.json({ ok: true });
     } catch (e) {
-      return new Response(JSON.stringify({ error: 'Server error' }), { status: 500, headers });
+      return res.status(500).json({ error: 'Server error' });
     }
   }
 
-  return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405, headers });
-}
+  return res.status(405).json({ error: 'Method not allowed' });
+};
